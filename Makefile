@@ -79,7 +79,9 @@ export RM := rm
 include $(ROOT)/make/$(OSFAMILY).mk
 
 # include the tools makefile
-include $(ROOT)/make/tools.mk
+ifeq ($(TARGET),$(filter $(TARGET), $(SITL_TARGETS)))
+ include $(ROOT)/make/tools.mk
+endif
 
 # default xtal value for F4 targets
 HSE_VALUE       ?= 8000000
@@ -563,7 +565,7 @@ INCLUDE_DIRS    := $(INCLUDE_DIRS) \
 SITL_SRC        := $(ROOT)/lib/main/dyad/dyad.c
 
 #Flags
-ARCH_FLAGS      =
+ARCH_FLAGS      = -m32
 DEVICE_FLAGS    =
 LD_SCRIPT       = src/main/target/SITL/parameter_group.ld
 STARTUP_SRC     =
