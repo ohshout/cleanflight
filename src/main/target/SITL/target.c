@@ -64,6 +64,7 @@ int lockMainPID(void) {
     return pthread_mutex_trylock(&mainLoopLock);
 }
 
+#define AERO
 #define RAD2DEG (180.0 / M_PI)
 #define ACC_SCALE (256 / 9.80665)
 #define GYRO_SCALE (16.4)
@@ -98,9 +99,23 @@ void updateState(const fdm_packet* pkt) {
     fakeAccSet(fakeAccDev, x, y, z);
 //	printf("[acc]%lf,%lf,%lf\n", pkt->imu_linear_acceleration_xyz[0], pkt->imu_linear_acceleration_xyz[1], pkt->imu_linear_acceleration_xyz[2]);
 
+#ifdef AERO
+		/* --TC-- It seems that this UDP server used to expect processed sensor data.
+		 * It then translates the processed data back to raw data (unscaled data in deg/s).
+		 * I guess it is so just because Gazebo provides processed sensor
+		 * data (in deg/s, 16.4 scale, TOP_0DEG alignment).
+		 * Now that we've got control on both ends, it doesn't make sense to translate
+		 * data back and forth. In our case, the sensor thread now sends out raw data and
+		 * this receiver thread sets the raw data to the fake Gyro driver.
+		 * All the data scaling*/
+    x = pkt->imu_angular_velocity_rpy[0];
+    y = pkt->imu_angular_velocity_rpy[1];
+    z = pkt->imu_angular_velocity_rpy[2];
+#else
     x = pkt->imu_angular_velocity_rpy[0] * GYRO_SCALE * RAD2DEG;
     y = -pkt->imu_angular_velocity_rpy[1] * GYRO_SCALE * RAD2DEG;
     z = -pkt->imu_angular_velocity_rpy[2] * GYRO_SCALE * RAD2DEG;
+#endif
     fakeGyroSet(fakeGyroDev, x, y, z);
 //	printf("[gyr]%lf,%lf,%lf\n", pkt->imu_angular_velocity_rpy[0], pkt->imu_angular_velocity_rpy[1], pkt->imu_angular_velocity_rpy[2]);
 
