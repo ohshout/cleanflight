@@ -36,6 +36,7 @@
 const timerHardware_t timerHardware[1]; // unused
 
 #include "drivers/accgyro/accgyro_fake.h"
+#include "drivers/compass/compass_fake.h"
 #include "flight/imu.h"
 
 #include "config/feature.h"
@@ -93,9 +94,15 @@ void updateState(const fdm_packet* pkt) {
     }
 
     int16_t x,y,z;
+#ifdef AERO
+    x = pkt->imu_linear_acceleration_xyz[0];
+    y = pkt->imu_linear_acceleration_xyz[1];
+    z = pkt->imu_linear_acceleration_xyz[2];
+#else
     x = -pkt->imu_linear_acceleration_xyz[0] * ACC_SCALE;
     y = -pkt->imu_linear_acceleration_xyz[1] * ACC_SCALE;
     z = -pkt->imu_linear_acceleration_xyz[2] * ACC_SCALE;
+#endif
     fakeAccSet(fakeAccDev, x, y, z);
 //	printf("[acc]%lf,%lf,%lf\n", pkt->imu_linear_acceleration_xyz[0], pkt->imu_linear_acceleration_xyz[1], pkt->imu_linear_acceleration_xyz[2]);
 
@@ -118,6 +125,13 @@ void updateState(const fdm_packet* pkt) {
 #endif
     fakeGyroSet(fakeGyroDev, x, y, z);
 //	printf("[gyr]%lf,%lf,%lf\n", pkt->imu_angular_velocity_rpy[0], pkt->imu_angular_velocity_rpy[1], pkt->imu_angular_velocity_rpy[2]);
+
+#ifdef AERO
+    x = pkt->imu_mag_xyz[0];
+    y = pkt->imu_mag_xyz[1];
+    z = pkt->imu_mag_xyz[2];
+    fakeMagSet(fakeMagDev, x, y, z);
+#endif
 
 #if defined(SKIP_IMU_CALC)
 #if defined(SET_IMU_FROM_EULER)
